@@ -48,7 +48,7 @@ var line = d3.svg.line.radial()
 //sets the radius-accessor to the specified function
                     .radius(function(d) {
 //y0 is the base of the y value of each of the stacked areas
-                        return radius(d.y0 + d.y);
+                        return scaleDown(radius(d.y0 + d.y));
                         });
 //creates a new area generator
 var area = d3.svg.area.radial().interpolate("cardinal-closed")
@@ -56,10 +56,10 @@ var area = d3.svg.area.radial().interpolate("cardinal-closed")
                                     return angle(d.time);
                                     })
                                 .innerRadius(function(d) {
-                                    return radius(d.y0);
+                                    return scaleDown(radius(d.y0));
                                     })
                                 .outerRadius(function(d) {
-                                    return radius(d.y0 + d.y);
+                                    return scaleDown(radius(d.y0 + d.y));
                                     });
 //creates the svg canvas
 var svg = d3.select("body")
