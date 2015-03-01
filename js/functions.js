@@ -46,20 +46,20 @@ var line = d3.svg.line.radial()
                         return angle(d.time);
                         })
 //sets the radius-accessor to the specified function
-                    .radius(scaleDown(function(d) {
+                    .radius(function(d) {
 //y0 is the base of the y value of each of the stacked areas
                         return radius(d.y0 + d.y);
-                        }));
+                        });
 //creates a new area generator
 var area = d3.svg.area.radial().interpolate("cardinal-closed")
                                 .angle(function(d) {
                                     return angle(d.time);
                                     })
                                 .innerRadius(function(d) {
-                                    return radius(scaleDown(d.y0));
+                                    return radius(d.y0);
                                     })
                                 .outerRadius(function(d) {
-                                    return radius(scaleDown(d.y0 + d.y));
+                                    return radius(d.y0 + d.y);
                                     });
 //creates the svg canvas
 var svg = d3.select("body")
@@ -75,14 +75,21 @@ d3.csv("data/data.csv", type, function(error, data) {
     var layers = stack(nest.entries(data));
     //define the domains of the scale ranges defined earlier for angle and radius
     // Extend the domain slightly to match the range of [0, 2Ï€].
+   
     angle.domain([0, d3.max(data, function(d) {
         return d.time + 1;
     })]);
+
+    var maxData = d3.max(data, function(d) {
+        return d.y;
+    });
+    console.log("maxData: " + JSON.stringify(maxData));
     //goes from 0 to the maximum of the data 
     radius.domain([0, d3.max(data, function(d) {
         return d.y0 + d.y;
     })]);
-    scaleDown.domain([0, 500]);
+
+    scaleDown.domain([0, maxData]);
     //plots the data onto layers
     svg.selectAll(".layer")
         .data(layers)
