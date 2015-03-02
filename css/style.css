@@ -1,5 +1,10 @@
 body {
   font: 10px sans-serif;
+  background: #F2E3C6;
+}
+#daySlider{
+	position: absolute;
+	bottom: 0;
 }
 
 .axis line {

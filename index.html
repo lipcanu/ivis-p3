@@ -7,6 +7,15 @@
         <meta content="utf-8" http-equiv="encoding">
     </head>
     <body>
+        <div id="daySlider">
+        <input type="range" min="1" max="31" value="1" step="1" onchange="showValue(this.value)"  />
+        <span id="range">0</span>
+        </div>
+        <script type="text/javascript">
+        function showValue(newValue){
+            document.getElementById("range").innerHTML=newValue;
+        }
+        </script>
         <script src="lib/d3.min.js"></script>
         <script src="js/functions.js"></script>
     </body>
