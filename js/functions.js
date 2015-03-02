@@ -1,5 +1,5 @@
 //%a - abbreviated weekday name.
-var formatDate = d3.time.format("%a"),
+var formatDate = d3.time.format("%g"),
     formatDay = function(d) {
         return formatDate(new Date(2007, 0, d));
     };
@@ -13,7 +13,7 @@ var angle = d3.time.scale().range([0, 2 * Math.PI]);
 //the radius is mapped to the limits of the inner radius and outer radius
 var radius = d3.scale.linear().range([innerRadius, outerRadius]);
 //creates a scale for the values 
-// var scaleDown = d3.scale.linear().range([0, (outerRadius-innerRadius)/3]);
+var scaleDown = d3.scale.linear().range([0, (outerRadius-innerRadius)/3]);
 
 //the color pallettes 
 var z = d3.scale.category10();
@@ -34,9 +34,9 @@ var stack = d3.layout.stack()
                         return d.value;
                         });
 //.nest groups array elements hierarchically
-var nest = d3.nest().key(function(d) {
-    return d.key;
-});
+var nest = d3.nest()
+    .key(function(d) {  return d.key;});
+    // .key(function(d){ return d.time; });
 //create a new radial line generator
 var line = d3.svg.line.radial()
 //sets the interpolation mode to cardinal-closed = closed Cardinal spline, as in a loop.
@@ -69,63 +69,79 @@ var svg = d3.select("body")
             .append("g")
             .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 //gets the data
-d3.csv("data/data.csv", type, function(error, data) {
+d3.csv("data/data_day.csv", type, function(error, data) {
 
-    function getDataSubset(data){
+    // function getDataSubset(data){
         
-        var result = [];
-        var el = vv = kv = 0 ;
-        for(i=0; i<data.length; i++){
-            if(data[i].key == "el" && el <24) 
-                {
-                    result.push(data[i]);
-                    el++;
-                }
-            else if(data[i].key == "kv" && kv <24)
-                {
-                    result.push(data[i]);
-                    kv++;
-                }
-            else if(data[i].key == "vv" && vv <24)
-                {
-                    result.push(data[i]);
-                    vv++;
-                }
-        }
-        return result;
+    //     var result = [];
+    //     var el = vv = kv = 0 ;
+    //     for(i=0; i<data.length; i++){
+    //         if(data[i].key == "el" && el <10) 
+    //             {
+    //                 result.push(data[i]);
+    //                 el++;
+    //             }
+    //         else if(data[i].key == "kv" && kv <10)
+    //             {
+    //                 result.push(data[i]);
+    //                 kv++;
+    //             }
+    //         else if(data[i].key == "vv" && vv <10)
+    //             {
+    //                 result.push(data[i]);
+    //                 vv++;
+    //             }
+    //     }
+    //     return result;
 
-    }
-    var dataSubset = getDataSubset(data);
-    console.log("dataSubset: " + JSON.stringify(dataSubset));
-    console.log("length" + dataSubset.length);
+    // }
+    // var dataSubset = getDataSubset(data);
+    // console.log("dataSubset: " + JSON.stringify(dataSubset));
+    // console.log("length" + dataSubset.length);
+    
     //creates layers with the stack layout function and the nest function
     //nest.entries - evaluate the nest operator, returning an array of key values tuples
    
     var layers = stack(nest.entries(data));
+    var dataSubset = layers.filter(function(d){return (d.time>1 && d.time <10)});
+    console.log("layers" + JSON.stringify(layers));
+    console.log("layers length" + layers.length);
+    console.log("layers[i]: " + JSON.stringify(layers[1].values))
+    //console.log("data: " + JSON.stringify(data))
     //define the domains of the scale ranges defined earlier for angle and radius
     // Extend the domain slightly to match the range of [0, 2Ï€].
-   
     angle.domain([0, d3.max(data, function(d) {
         // console.log("dtime: "+d.time)
         return d.time + 1;
     })]);
 
-    var maxData = d3.max(data, function(d) {
-         // console.log("dy: "+d.y0+ d.y)
-        return d.y0+ d.y;
-    });
-     console.log("maxData: " + JSON.stringify(maxData));
-    //goes from 0 to the maximum of the data 
-    radius.domain([0, d3.max(data, function(d) {
-        return d.y0 + d.y;
-    })]);
+
+        for(i=0; i<=2;i++){
+           //goes from 0 to the maximum of the data 
+           var min =  d3.min(layers[i].values, function(d) {  return d.y ; });
+           var max = d3.max(layers[i].values, function(d) {   return d.y0 + d.y;  });
+           console.log('min: ' + min);
+           console.log('max: ' + max);
+           radius.domain([min, max]);
+        }
 
     // scaleDown.domain([0, maxData]);
     //plots the data onto layers
     svg.selectAll(".layer")
-        .data(layers)
+        .data(layers)  
         .enter()
         .append("path")
+        // .filter(function(d, i)
+        // { 
+        //     console.log("i'm here: " + this);
+        //     return (this.i.time>=0 && this.i.time<=10)
+        //     var result = [];
+        //     for(j=0;j<=d.values.length;j++){
+        //         console.log("i'm in the loop: " + JSON.stringify(d["values"][j]));
+        //         return (d["values"][j]["time"]>=0 && d["values"][j]["time"]<=10)
+        //     }
+        // })
+        //returns placeholders for missing elements
         .attr("class", "layer")
         .attr("d", function(d) {
             return area(d.values);
@@ -133,24 +149,26 @@ d3.csv("data/data.csv", type, function(error, data) {
         .style("fill", function(d, i) {
             return z(i);
             });
+
+
     //draws the axis
-    // svg.selectAll(".axis")
-    //     .data(d3.range(angle.domain()[1]))
-    //     .enter()
-    //     .append("g")
-    //     .attr("class", "axis")
-    //     //rotates the text to follow the axis
-    //     .attr("transform", function(d) {
-    //         return "rotate(" + angle(d) * 180 / Math.PI + ")";
-    //         })
-    //     .call(d3.svg.axis().scale(radius.copy().range([-innerRadius, -outerRadius])).orient("left"))
-    //     .append("text")
-    //     .attr("y", -innerRadius + 6)
-    //     .attr("dy", ".71em")
-    //     .attr("text-anchor", "middle")
-    //     .text(function(d) {
-    //         return formatDay(d);
-    //         });
+    svg.selectAll(".axis")
+        .data(d3.range(angle.domain()[1]))
+        .enter()
+        .append("g")
+        .attr("class", "axis")
+        //rotates the text to follow the axis
+        .attr("transform", function(d) {
+            return "rotate(" + angle(d) * 180 / Math.PI + ")";
+            })
+        .call(d3.svg.axis().scale(radius.copy().range([-innerRadius, -outerRadius])).orient("left"))
+        .append("text")
+        .attr("y", -innerRadius + 6)
+        .attr("dy", ".71em")
+        .attr("text-anchor", "middle")
+        .text(function(d) {
+            return formatDay(d);
+            });
 });
 
 function type(d) {
